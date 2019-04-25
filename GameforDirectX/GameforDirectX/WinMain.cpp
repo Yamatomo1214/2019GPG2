@@ -1,7 +1,33 @@
 #include <windows.h>
-
+#include <thread>
+#include <chrono>
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 char szClassNme[] = "ウィンドウクラス・ネーム";
+
+bool isGameRarning; // ゲームが終了するかどうか判定
+
+// ゲームスレッド
+void GameThreadEntryPoint()
+{
+	// DirectXの初期化
+	auto previousTime = std::chrono::steady_clock::now(); // 前回の時間
+	while (isGameRarning)
+	{
+		auto currentTime = std::chrono::steady_clock::now(); // 現在の時間
+		auto elaosedTime = currentTime - previousTime; // 経過時間
+		if (elaosedTime > std::chrono::microseconds(16666)) // 16ミリ秒間隔でゲーム処理が行われる
+		{
+
+			// ゲーム画面のレンダリング
+
+
+			// ゲーム(フレーム)の更新
+			previousTime = currentTime;
+		}
+	}
+}
+
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInst,
 	LPSTR lpszCmdLine, int nCmdShow)
@@ -60,12 +86,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInst,
 		NULL,
 		hInstance,
 		NULL);
+	
+	// ゲーム用スレッドの起動状態にする
+	isGameRarning = true;
+
+	// ゲーム用のスレッドの作成
+	std::thread gameThread(GameThreadEntryPoint);
+
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+	// ゲーム用スレッドを中断する
+	isGameRarning = false;
+
+	// ゲームスレッドの終了を待つ
+	gameThread.join();
+
 	return (msg.wParam);
 }
 
